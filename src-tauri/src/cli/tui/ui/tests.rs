@@ -1184,6 +1184,30 @@ fn providers_pane_has_border_and_selected_row_is_accent() {
 }
 
 #[test]
+fn providers_empty_state_matches_gui_copy_in_chinese() {
+    let _lock = lock_env();
+    let _lang = use_test_language(Language::Chinese);
+    let _no_color = EnvGuard::remove("NO_COLOR");
+
+    let mut app = App::new(Some(AppType::Claude));
+    app.route = Route::Providers;
+    app.focus = Focus::Content;
+
+    let all = all_text(&render(&app, &UiData::default()));
+    let compact = all.replace(' ', "");
+
+    assert!(compact.contains("还没有添加任何供应商"), "{all}");
+    assert!(
+        compact.contains(
+            "如果你已有配置，请点击\"导入当前配置\"，所有数据将安全保存在default供应商中"
+        ),
+        "{all}"
+    );
+    assert!(compact.contains("Enter导入当前配置"), "{all}");
+    assert!(compact.contains("a添加供应商"), "{all}");
+}
+
+#[test]
 fn focused_pane_border_keeps_v500_bold_style_in_ansi256_mode() {
     let _lock = lock_env();
     let _no_color = EnvGuard::remove("NO_COLOR");

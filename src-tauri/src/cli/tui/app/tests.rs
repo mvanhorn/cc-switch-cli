@@ -1005,6 +1005,18 @@ mod tests {
     }
 
     #[test]
+    fn providers_enter_key_imports_current_config_when_empty() {
+        let mut app = App::new(Some(AppType::Claude));
+        app.route = Route::Providers;
+        app.focus = Focus::Content;
+
+        let action = app.on_key(key(KeyCode::Enter), &UiData::default());
+
+        assert!(matches!(action, Action::ProviderImportLiveConfig));
+        assert!(matches!(app.overlay, Overlay::None));
+    }
+
+    #[test]
     fn providers_i_key_is_noop() {
         let mut app = App::new(Some(AppType::Claude));
         app.route = Route::Providers;

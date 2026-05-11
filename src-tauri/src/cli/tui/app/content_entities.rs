@@ -85,6 +85,9 @@ impl App {
                 Action::None
             }
             KeyCode::Enter => {
+                if data.providers.rows.is_empty() {
+                    return Action::ProviderImportLiveConfig;
+                }
                 let Some(row) = visible.get(self.provider_idx) else {
                     return Action::None;
                 };

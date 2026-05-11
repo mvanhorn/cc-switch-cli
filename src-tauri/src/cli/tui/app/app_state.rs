@@ -60,6 +60,7 @@ pub enum Action {
         provider_id: String,
         model_id: String,
     },
+    ProviderImportLiveConfig,
     ProviderDelete {
         id: String,
     },

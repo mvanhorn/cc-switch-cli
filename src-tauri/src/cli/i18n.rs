@@ -2138,6 +2138,38 @@ pub mod texts {
         }
     }
 
+    pub fn tui_provider_empty_title() -> &'static str {
+        if is_chinese() {
+            "还没有添加任何供应商"
+        } else {
+            "No providers have been added yet"
+        }
+    }
+
+    pub fn tui_provider_empty_subtitle() -> &'static str {
+        if is_chinese() {
+            "如果你已有配置，请点击\"导入当前配置\"，所有数据将安全保存在 default 供应商中"
+        } else {
+            "If you already have a config, use \"Import Current Config\". Everything will be safely stored in the default provider."
+        }
+    }
+
+    pub fn tui_key_import_current_config() -> &'static str {
+        if is_chinese() {
+            "导入当前配置"
+        } else {
+            "import current config"
+        }
+    }
+
+    pub fn tui_key_add_provider() -> &'static str {
+        if is_chinese() {
+            "添加供应商"
+        } else {
+            "add provider"
+        }
+    }
+
     pub fn tui_codex_official_no_api_key_tip() -> &'static str {
         if is_chinese() {
             "官方无需填写 API Key，直接保存即可。"
