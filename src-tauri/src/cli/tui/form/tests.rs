@@ -2096,11 +2096,15 @@ fn provider_add_form_disabling_common_config_preserves_provider_specific_env_key
 }
 
 #[test]
-fn provider_add_form_opencode_only_adds_aicodemirror_beyond_custom() {
+fn provider_add_form_opencode_exposes_supported_sponsor_presets() {
     let form = ProviderAddFormState::new(AppType::OpenCode);
     let labels = form.template_labels();
 
-    assert_eq!(labels, vec!["Custom", "* AICodeMirror"]);
+    assert_eq!(labels, vec!["Custom", "* AICodeMirror", "* Cubence"]);
+    assert!(
+        !labels.contains(&"* PackyCode"),
+        "OpenCode should expose only explicitly supported sponsor presets"
+    );
 }
 
 #[test]
