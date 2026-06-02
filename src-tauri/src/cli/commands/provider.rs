@@ -1,4 +1,4 @@
-use clap::Subcommand;
+use clap::{Subcommand, ValueEnum};
 use std::{collections::HashSet, path::PathBuf};
 
 use super::{provider_inspect, provider_usage_query};
@@ -450,7 +450,17 @@ pub enum ProviderCommand {
     /// Fetch remote model list for a provider
     FetchModels {
         /// Provider ID to query
-        id: String,
+        #[arg(required_unless_present = "base_url")]
+        id: Option<String>,
+        /// Base URL to query without saving a provider
+        #[arg(long, conflicts_with = "id", required_unless_present = "id")]
+        base_url: Option<String>,
+        /// API key for the one-off request
+        #[arg(long, requires = "base_url")]
+        api_key: Option<String>,
+        /// Authentication/header strategy for the one-off request
+        #[arg(long, value_enum, requires = "base_url")]
+        auth: Option<ModelFetchAuthArg>,
     },
     /// Query provider quota or usage
     Quota {
@@ -494,14 +504,45 @@ pub fn execute(cmd: ProviderCommand, app: Option<AppType>) -> Result<(), AppErro
         ProviderCommand::StreamCheck { id } => {
             provider_inspect::stream_check_provider(app_type, &id)
         }
-        ProviderCommand::FetchModels { id } => {
-            provider_inspect::fetch_models_provider(app_type, &id)
+        ProviderCommand::FetchModels {
+            id,
+            base_url,
+            api_key,
+            auth,
+        } => {
+            if let Some(id) = id {
+                provider_inspect::fetch_models_provider(app_type, &id)
+            } else {
+                provider_inspect::fetch_models_once(
+                    app_type,
+                    base_url.as_deref(),
+                    api_key.as_deref(),
+                    auth.map(Into::into),
+                )
+            }
         }
         ProviderCommand::Quota { id, json } => {
             provider_inspect::quota_provider(app_type, &id, json)
         }
         ProviderCommand::UsageQuery(cmd) => provider_usage_query::execute(cmd, app_type),
         ProviderCommand::Export { id, output } => export_provider(app_type, &id, output),
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ModelFetchAuthArg {
+    Bearer,
+    Anthropic,
+    GoogleApiKey,
+}
+
+impl From<ModelFetchAuthArg> for provider_inspect::ProviderModelFetchStrategy {
+    fn from(value: ModelFetchAuthArg) -> Self {
+        match value {
+            ModelFetchAuthArg::Bearer => Self::Bearer,
+            ModelFetchAuthArg::Anthropic => Self::Anthropic,
+            ModelFetchAuthArg::GoogleApiKey => Self::GoogleApiKey,
+        }
     }
 }
 

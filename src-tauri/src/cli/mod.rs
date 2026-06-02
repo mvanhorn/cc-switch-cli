@@ -131,6 +131,7 @@ mod tests {
     use std::ffi::OsString;
 
     use super::{Cli, Commands};
+    use crate::app_config::AppType;
     use crate::cli::commands::completions::{
         CompletionLifecycleCommand, CompletionsAction, ManagedShellSelection,
     };
@@ -826,11 +827,80 @@ mod tests {
         match cli.command {
             Some(Commands::Provider(super::commands::provider::ProviderCommand::FetchModels {
                 id,
+                base_url,
+                api_key,
+                auth,
             })) => {
-                assert_eq!(id, "demo");
+                assert_eq!(id.as_deref(), Some("demo"));
+                assert_eq!(base_url, None);
+                assert_eq!(api_key, None);
+                assert_eq!(auth, None);
             }
             _ => panic!("expected provider fetch-models command"),
         }
+    }
+
+    #[test]
+    fn parses_provider_fetch_models_one_off_options() {
+        let cli = Cli::parse_from([
+            "cc-switch",
+            "--app",
+            "gemini",
+            "provider",
+            "fetch-models",
+            "--base-url",
+            "https://gemini.example.com",
+            "--api-key",
+            "sk-gemini",
+            "--auth",
+            "google-api-key",
+        ]);
+
+        assert_eq!(cli.app, Some(AppType::Gemini));
+        match cli.command {
+            Some(Commands::Provider(super::commands::provider::ProviderCommand::FetchModels {
+                id,
+                base_url,
+                api_key,
+                auth,
+            })) => {
+                assert_eq!(id, None);
+                assert_eq!(base_url.as_deref(), Some("https://gemini.example.com"));
+                assert_eq!(api_key.as_deref(), Some("sk-gemini"));
+                assert_eq!(
+                    auth,
+                    Some(super::commands::provider::ModelFetchAuthArg::GoogleApiKey)
+                );
+            }
+            _ => panic!("expected provider fetch-models command"),
+        }
+    }
+
+    #[test]
+    fn provider_fetch_models_requires_id_or_base_url() {
+        let err = match Cli::try_parse_from(["cc-switch", "provider", "fetch-models"]) {
+            Ok(_) => panic!("provider fetch-models should require id or --base-url"),
+            Err(err) => err,
+        };
+
+        assert_eq!(err.kind(), clap::error::ErrorKind::MissingRequiredArgument);
+    }
+
+    #[test]
+    fn provider_fetch_models_rejects_saved_id_with_one_off_base_url() {
+        let err = match Cli::try_parse_from([
+            "cc-switch",
+            "provider",
+            "fetch-models",
+            "demo",
+            "--base-url",
+            "https://api.example.com",
+        ]) {
+            Ok(_) => panic!("saved provider id should conflict with --base-url"),
+            Err(err) => err,
+        };
+
+        assert_eq!(err.kind(), clap::error::ErrorKind::ArgumentConflict);
     }
 
     #[test]
