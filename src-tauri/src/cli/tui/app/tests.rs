@@ -13628,33 +13628,81 @@ mod tests {
     }
 
     #[test]
-    fn sessions_left_right_switch_between_list_and_detail_without_tab() {
+    fn sessions_arrow_keys_move_through_nav_list_and_detail() {
         let mut app = app_with_session_page();
         let data = UiData::default();
 
-        assert_eq!(app.sessions.pane, SessionsPane::List);
+        app.focus = Focus::Nav;
+        app.sessions.pane = SessionsPane::Detail;
+
         app.on_key(key(KeyCode::Right), &data);
         assert_eq!(app.focus, Focus::Content);
-        assert_eq!(app.sessions.pane, SessionsPane::Detail);
+        assert_eq!(app.sessions.pane, SessionsPane::List);
 
-        app.on_key(key(KeyCode::Tab), &data);
+        assert_eq!(app.sessions.pane, SessionsPane::List);
+        let expected_key = session_key(&app.sessions.rows[0]);
+        let action = app.on_key(key(KeyCode::Right), &data);
+        assert_eq!(app.focus, Focus::Content);
         assert_eq!(app.sessions.pane, SessionsPane::Detail);
+        assert!(matches!(
+            action,
+            Action::SessionMessagesLoad {
+                ref key,
+                ref provider_id,
+                ref source_path
+            } if key == &expected_key
+                && provider_id == "claude"
+                && source_path == "/tmp/session.jsonl"
+        ));
 
         app.on_key(key(KeyCode::Left), &data);
         assert_eq!(app.focus, Focus::Content);
         assert_eq!(app.sessions.pane, SessionsPane::List);
+
+        app.on_key(key(KeyCode::Left), &data);
+        assert_eq!(app.focus, Focus::Nav);
+        assert_eq!(app.sessions.pane, SessionsPane::List);
     }
 
     #[test]
-    fn sessions_h_l_switch_between_list_and_detail() {
+    fn sessions_tab_keys_follow_same_focus_chain_as_arrows() {
         let mut app = app_with_session_page();
         let data = UiData::default();
 
-        app.on_key(key(KeyCode::Char('l')), &data);
+        app.focus = Focus::Nav;
+        app.on_key(key(KeyCode::Tab), &data);
+        assert_eq!(app.focus, Focus::Content);
+        assert_eq!(app.sessions.pane, SessionsPane::List);
+
+        let action = app.on_key(key(KeyCode::Tab), &data);
+        assert_eq!(app.focus, Focus::Content);
         assert_eq!(app.sessions.pane, SessionsPane::Detail);
+        assert!(matches!(action, Action::SessionMessagesLoad { .. }));
+
+        app.on_key(key(KeyCode::BackTab), &data);
+        assert_eq!(app.focus, Focus::Content);
+        assert_eq!(app.sessions.pane, SessionsPane::List);
+
+        let mut backtab = key(KeyCode::Tab);
+        backtab.modifiers = KeyModifiers::SHIFT;
+        app.on_key(backtab, &data);
+        assert_eq!(app.focus, Focus::Nav);
+    }
+
+    #[test]
+    fn sessions_h_l_follow_arrow_focus_chain() {
+        let mut app = app_with_session_page();
+        let data = UiData::default();
+
+        let action = app.on_key(key(KeyCode::Char('l')), &data);
+        assert_eq!(app.sessions.pane, SessionsPane::Detail);
+        assert!(matches!(action, Action::SessionMessagesLoad { .. }));
 
         app.on_key(key(KeyCode::Char('h')), &data);
         assert_eq!(app.sessions.pane, SessionsPane::List);
+
+        app.on_key(key(KeyCode::Char('h')), &data);
+        assert_eq!(app.focus, Focus::Nav);
     }
 
     #[test]

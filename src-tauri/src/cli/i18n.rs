@@ -3289,6 +3289,14 @@ pub mod texts {
         }
     }
 
+    pub fn tui_key_pane() -> &'static str {
+        if is_chinese() {
+            "切换区域"
+        } else {
+            "pane"
+        }
+    }
+
     pub fn tui_key_toggle() -> &'static str {
         if is_chinese() {
             "启用/禁用"

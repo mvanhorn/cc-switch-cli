@@ -35,7 +35,7 @@ pub(super) fn render_sessions(
             theme,
             &[
                 ("↑↓", texts::tui_key_select()),
-                ("←→/h/l", texts::tui_key_focus()),
+                ("←→/h/l", texts::tui_key_pane()),
                 ("Enter", texts::tui_key_view()),
                 ("R", texts::tui_key_restore()),
                 ("d", texts::tui_key_delete()),

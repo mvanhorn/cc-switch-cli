@@ -459,19 +459,15 @@ impl App {
                     .map(Action::SetAppType)
                     .unwrap_or(Action::None);
             }
-            KeyCode::Left
-                if matches!(self.route, Route::Sessions) && self.focus == Focus::Content =>
-            {
-                return self.on_content_key(key, data);
+            KeyCode::Left if matches!(self.route, Route::Sessions) => {
+                return self.move_sessions_focus_left();
             }
             KeyCode::Left => {
                 self.focus = Focus::Nav;
                 return Action::None;
             }
-            KeyCode::Right
-                if matches!(self.route, Route::Sessions) && self.focus == Focus::Content =>
-            {
-                return self.on_content_key(key, data);
+            KeyCode::Right if matches!(self.route, Route::Sessions) => {
+                return self.move_sessions_focus_right(data);
             }
             KeyCode::Right => {
                 if route_has_content_list(&self.route) {
@@ -480,6 +476,16 @@ impl App {
                     self.focus = Focus::Nav;
                 }
                 return Action::None;
+            }
+            KeyCode::Tab if matches!(self.route, Route::Sessions) => {
+                return if key.modifiers.contains(KeyModifiers::SHIFT) {
+                    self.move_sessions_focus_left()
+                } else {
+                    self.move_sessions_focus_right(data)
+                };
+            }
+            KeyCode::BackTab if matches!(self.route, Route::Sessions) => {
+                return self.move_sessions_focus_left();
             }
             KeyCode::Char('q') | KeyCode::Esc => {
                 return self.on_back_key();
@@ -590,7 +596,7 @@ impl App {
         match self.route.clone() {
             Route::Providers => self.on_providers_key(key, data),
             Route::ProviderDetail { id } => self.on_provider_detail_key(key, data, &id),
-            Route::Sessions => self.on_sessions_key(key),
+            Route::Sessions => self.on_sessions_key(key, data),
             Route::Mcp => self.on_mcp_key(key, data),
             Route::Prompts => self.on_prompts_key(key, data),
             Route::HermesMemory => self.on_hermes_memory_key(key, data),
