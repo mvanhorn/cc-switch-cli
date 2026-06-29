@@ -213,9 +213,25 @@ async fn app_preferred_port_falls_back_to_legacy_proxy_config() -> Result<(), Ap
     db.update_proxy_config(config).await?;
 
     assert_eq!(db.get_app_proxy_preferred_port("claude")?, 17021);
+    assert_eq!(db.get_app_proxy_preferred_port("codex")?, 17021);
+    assert_eq!(db.get_app_proxy_preferred_port("gemini")?, 17021);
 
     db.set_app_proxy_preferred_port("claude", 17022)?;
     assert_eq!(db.get_app_proxy_preferred_port("claude")?, 17022);
+    Ok(())
+}
+
+#[tokio::test]
+async fn app_preferred_port_ignores_legacy_claude_default_for_other_apps() -> Result<(), AppError> {
+    let db = Database::memory()?;
+    let mut config = db.get_proxy_config().await?;
+    config.listen_port = 15721;
+    db.update_proxy_config(config).await?;
+
+    assert_eq!(db.get_app_proxy_preferred_port("claude")?, 15721);
+    assert_eq!(db.get_app_proxy_preferred_port("codex")?, 15722);
+    assert_eq!(db.get_app_proxy_preferred_port("gemini")?, 15723);
+
     Ok(())
 }
 
